@@ -11,6 +11,27 @@ This guide assumes you have a model packaged with Cog.
 If you don't, [follow our getting started guide](getting-started-own-model.md),
 or start from one of the [examples in the Cog repository](examples.md).
 
+## Publish source to Zinnia
+
+This fork can publish a Cog project to Zinnia without building or pushing a
+derived Docker image. Zinnia stores the source archive and Cog-generated
+OpenAPI schema as an immutable model version, then combines that version with
+a separately managed dstack runtime profile when you create a deployment.
+
+Authenticate once, then publish from the directory containing `cog.yaml`:
+
+```console
+printf '%s' "$ZINNIA_PUBLISHER_TOKEN" | \
+  cog login --registry replicate.zinnia.page --token-stdin
+
+cog push replicate.zinnia.page/bodyiq/minimax-h3
+```
+
+The source-publishing path does not initialize Docker. `.dockerignore` controls
+which project files are excluded; `.git` and `.cog` are always excluded. The
+control plane, rather than `cog.yaml`, owns dstack hardware profiles and the
+upstream runtime image used for deployment.
+
 ## Build a Docker image
 
 Build your model into a Docker image:

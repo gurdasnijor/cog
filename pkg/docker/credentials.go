@@ -42,6 +42,16 @@ func loadUserInformation(ctx context.Context, registryHost string) (*command.Use
 	}, nil
 }
 
+// LoadLoginToken returns credentials stored by SaveLoginToken without
+// requiring a running Docker daemon.
+func LoadLoginToken(ctx context.Context, registryHost string) (string, error) {
+	credentials, err := loadUserInformation(ctx, registryHost)
+	if err != nil {
+		return "", err
+	}
+	return credentials.Token, nil
+}
+
 func loadAuthFromConfig(conf *configfile.ConfigFile, registryHost string) (types.AuthConfig, error) {
 	return conf.AuthConfigs[registryHost], nil
 }

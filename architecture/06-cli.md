@@ -14,8 +14,8 @@ The Cog CLI is a Go binary that provides commands for the full model lifecycle: 
 | `cog exec`       | Run arbitrary commands in a container |
 | `cog serve`      | Start HTTP server in a container      |
 | `cog playground` | Open a local UI for a model API       |
-| `cog push`       | Deploy to Replicate                   |
-| `cog login`      | Authenticate with Replicate           |
+| `cog push`       | Publish through a target provider      |
+| `cog login`      | Authenticate with a target provider    |
 
 ## Development Commands
 
@@ -146,27 +146,33 @@ Key flags:
 
 ### cog push
 
-**Job**: Build and push to Replicate.
+**Job**: Publish a model through the provider selected by the target host.
 
 ```bash
 cog push r8.im/username/model-name
+cog push replicate.zinnia.page/username/model-name
 ```
 
-What happens:
+The provider boundary has two publication modes:
 
-1. Builds image (like `cog build`)
-2. Pushes to Replicate's registry
-3. Registers model with Replicate API
+- OCI providers use Cog's normal build pipeline and push the resulting image.
+- A provider implementing the optional source-publisher capability owns the
+  entire publication request. Cog generates the model schema and passes it the
+  project source before Docker is initialized. Zinnia uses this path so its
+  control plane can combine model source with a separately managed runtime and
+  hardware profile.
 
-The image tag must be a Replicate model reference (`r8.im/owner/name`).
+Provider lookup is ordered from specific hosts to the generic OCI fallback.
+This preserves the existing behavior for ordinary registries while allowing a
+control plane to define a non-image publication contract.
 
-**Code**: `pkg/cli/push.go`, `pkg/web/`
+**Code**: `pkg/cli/`, `pkg/provider/`
 
 ---
 
 ### cog login
 
-**Job**: Authenticate with Replicate.
+**Job**: Authenticate with the provider selected by the registry host.
 
 ```bash
 cog login
@@ -174,7 +180,9 @@ cog login
 cog login --token-stdin < token.txt
 ```
 
-Stores credentials for `cog push`.
+Stores credentials for `cog push` using Docker's credential storage. A
+source-publishing provider can read those credentials without connecting to a
+Docker daemon.
 
 **Code**: `pkg/cli/login.go`
 
@@ -257,6 +265,8 @@ Commands delegate to packages under `pkg/`:
 - `pkg/predict/` -- Local prediction execution (talks to container's HTTP API)
 - `pkg/schema/` -- Static schema generator (tree-sitter)
 - `pkg/wheels/` -- SDK and coglet wheel resolution
+- `pkg/provider/` -- Target selection, authentication, OCI post-push hooks, and
+  optional provider-owned source publication
 
 **Infrastructure:**
 

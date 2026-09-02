@@ -35,3 +35,10 @@ type Provider interface {
 	// - pushErr is nil on success, contains the push error on failure
 	PostPush(ctx context.Context, opts PushOptions, pushErr error) error
 }
+
+// Publisher is an optional provider capability for publishing model source
+// directly. Providers that implement Publisher own the complete publication
+// flow, so the CLI does not initialize Docker or push an OCI image.
+type Publisher interface {
+	Publish(ctx context.Context, opts PushOptions) error
+}

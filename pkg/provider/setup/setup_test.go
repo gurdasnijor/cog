@@ -20,6 +20,11 @@ func TestInit(t *testing.T) {
 	require.NotNil(t, p)
 	require.Equal(t, "replicate", p.Name())
 
+	// Zinnia models use source publication rather than an OCI registry.
+	p = registry.ForImage("replicate.zinnia.page/bodyiq/model")
+	require.NotNil(t, p)
+	require.Equal(t, "zinnia", p.Name())
+
 	// Other images should get the Generic provider
 	p = registry.ForImage("ghcr.io/owner/repo")
 	require.NotNil(t, p)
