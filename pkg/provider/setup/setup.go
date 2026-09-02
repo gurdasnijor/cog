@@ -7,6 +7,7 @@ import (
 	"github.com/replicate/cog/pkg/provider"
 	"github.com/replicate/cog/pkg/provider/generic"
 	"github.com/replicate/cog/pkg/provider/replicate"
+	"github.com/replicate/cog/pkg/provider/zinnia"
 )
 
 var once sync.Once
@@ -19,6 +20,7 @@ func Init() {
 
 		// Register Replicate provider first (more specific)
 		registry.Register(replicate.New())
+		registry.Register(zinnia.New())
 
 		// Register Generic provider last (fallback for any OCI registry)
 		registry.Register(generic.New())

@@ -22,13 +22,17 @@ import (
 func newPushCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "push [IMAGE]",
-		Short: "Build and push model in current directory to a Docker registry",
-		Long: `Build a Docker image from cog.yaml and push it to a container registry.
+		Short: "Publish the model in the current directory",
+		Long: `Publish a model using the provider selected by the target host.
 
-Cog can push to any OCI-compliant registry. When pushing to Replicate's
-registry (r8.im), run 'cog login' first to authenticate.`,
+OCI registry targets build and push a Docker image. Zinnia targets publish
+Cog source and its generated OpenAPI schema without building an image. Run
+'cog login' for the target host first when authentication is required.`,
 		Example: `  # Push to Replicate
   cog push r8.im/your-username/my-model
+
+  # Publish source to Zinnia without building an image
+  cog push replicate.zinnia.page/your-username/my-model
 
   # Push to any OCI registry
   cog push registry.example.com/your-username/model-name
@@ -58,11 +62,6 @@ func push(cmd *cobra.Command, args []string) error {
 
 	// Initialize the provider registry
 	setup.Init()
-
-	dockerClient, err := docker.NewClient(ctx)
-	if err != nil {
-		return err
-	}
 
 	src, err := model.NewSource(configFilename)
 	if err != nil {
@@ -107,6 +106,14 @@ func push(cmd *cobra.Command, args []string) error {
 		Image:      pushTarget,
 		Config:     src.Config,
 		ProjectDir: src.ProjectDir,
+	}
+	if publisher, ok := p.(provider.Publisher); ok {
+		return publisher.Publish(ctx, pushOpts)
+	}
+
+	dockerClient, err := docker.NewClient(ctx)
+	if err != nil {
+		return err
 	}
 
 	// Build the image
